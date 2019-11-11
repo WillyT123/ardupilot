@@ -431,7 +431,7 @@ bool AP_MotorsMatrix::output_test_num(uint8_t output_channel, int16_t pwm)
 }
 
 // add_motor
-void AP_MotorsMatrix::add_motor_raw(int8_t motor_num, float roll_fac, float pitch_fac, float yaw_fac, uint8_t testing_order)
+void AP_MotorsMatrix::add_motor_raw(int8_t motor_num, float roll_fac, float pitch_fac, float yaw_fac, float thr_fac, uint8_t testing_order)
 {
     // ensure valid motor number is provided
     if (motor_num >= 0 && motor_num < AP_MOTORS_MAX_NUM_MOTORS) {
@@ -445,6 +445,7 @@ void AP_MotorsMatrix::add_motor_raw(int8_t motor_num, float roll_fac, float pitc
         _roll_factor[motor_num] = roll_fac;
         _pitch_factor[motor_num] = pitch_fac;
         _yaw_factor[motor_num] = yaw_fac;
+        _throttle_factor[motor_num] = thr_fac;
 
         // set order that motor appears in test
         _test_order[motor_num] = testing_order;
@@ -461,13 +462,14 @@ void AP_MotorsMatrix::add_motor(int8_t motor_num, float angle_degrees, float yaw
 }
 
 // add_motor using position and prop direction. Roll and Pitch factors can differ (for asymmetrical frames)
-void AP_MotorsMatrix::add_motor(int8_t motor_num, float roll_factor_in_degrees, float pitch_factor_in_degrees, float yaw_factor, uint8_t testing_order)
+void AP_MotorsMatrix::add_motor(int8_t motor_num, float roll_factor_in_degrees, float pitch_factor_in_degrees, float yaw_factor, float throttle_factor, uint8_t testing_order)
 {
     add_motor_raw(
         motor_num,
         cosf(radians(roll_factor_in_degrees + 90)),
         cosf(radians(pitch_factor_in_degrees)),
         yaw_factor,
+        throttle_factor,
         testing_order);
 }
 
@@ -495,6 +497,14 @@ void AP_MotorsMatrix::setup_motors(motor_frame_class frame_class, motor_frame_ty
 
     switch (frame_class) {
 
+#        case MOTOR_FRAME_PENTA:
+#            switch(frame_type) {
+#                    case MOTOR_FRAME_TYPE_PENTA
+#                        add_motor(AP_MOTORS_MOT_1, 45, AP_MOTORS_MATRIX_YAW_FACTOR_CW, 1)
+#                        add_motor(AP_MOTORS_MOT_2, 135, AP_MOTORS_MATRIX_YAW_FACTOR_CW, 2)
+#                        add_motor(AP_MOTORS_MOT_3, -135, AP_MOTORS_MATRIX_YAW_FACTOR_CW, 3)------> Here goes info about motor positioning and spin dir.
+#                        add_motor(AP_MOTORS_MOT_4, -45, AP_MOTORS_MATRIX_YAW_FACTOR_CW, 4)
+#                        add_motor(AP_MOTORS_MOT_5, 90, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 5) ------> This is the central rotor
         case MOTOR_FRAME_QUAD:
             switch (frame_type) {
                 case MOTOR_FRAME_TYPE_PLUS:
